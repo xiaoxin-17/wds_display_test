@@ -27,7 +27,7 @@ export TOPDIR
 TARGET := test
 
 
-obj-y += show_pixel.o
+obj-y +=display/
 
 all : start_recursive_build $(TARGET)
 	@echo $(TARGET) has been built!
