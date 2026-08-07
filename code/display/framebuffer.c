@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <framebuffer.h>
 
 static int fd_fb;
 static struct fb_var_screeninfo var;	/* Current var */
@@ -66,25 +67,32 @@ void lcd_put_pixel(int x, int y, unsigned int color)
 	}
 }
 
-int main(int argc, char **argv)
+char fb_init(void)
 {
-	int i;
-	
+	// 打开Framebuffer设备节点，读写方式操作LCD显存
 	fd_fb = open("/dev/fb0", O_RDWR);
 	if (fd_fb < 0)
 	{
 		printf("can't open /dev/fb0\n");
 		return -1;
 	}
+
+	// ioctl获取fb可变屏幕信息：分辨率、色深(bits_per_pixel)
 	if (ioctl(fd_fb, FBIOGET_VSCREENINFO, &var))
 	{
 		printf("can't get var\n");
 		return -1;
 	}
 
+	// 每行字节数 = 水平分辨率 × 每个像素bit数 / 8
 	line_width  = var.xres * var.bits_per_pixel / 8;
+	// 单个像素占用多少字节，例如24bit：3字节；32bit：4字节
 	pixel_width = var.bits_per_pixel / 8;
+	// 整个显存总字节大小
 	screen_size = var.xres * var.yres * var.bits_per_pixel / 8;
+
+	// mmap映射fb设备到用户态虚拟地址，直接操作显存，不需要read/write系统调用
+	// MAP_SHARED：用户空间修改同步到硬件显存
 	fb_base = (unsigned char *)mmap(NULL , screen_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_fb, 0);
 	if (fb_base == (unsigned char *)-1)
 	{
@@ -92,16 +100,31 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	/* 清屏: 全部设为白色 */
+	/* 清屏: 全部设为白色，0xff全字节置1 */
 	memset(fb_base, 0xff, screen_size);
 
-	/* 随便设置出100个为红色 */
+	return -1;
+}
+
+char fb_display(void)
+{
+	int i;
+	/* 清屏: 全部设为白色，0xff全字节置1 */
+	memset(fb_base, 0xff, screen_size);
+
+	/* 在屏幕中间画一条横线，100个红色像素点 */
 	for (i = 0; i < 100; i++)
 		lcd_put_pixel(var.xres/2+i, var.yres/2, 0xFF0000);
 	
+	return -1;
+
+}
+char fb_deinit(void)
+{
+	// 解除内存映射
 	munmap(fb_base , screen_size);
+	// 关闭fb设备文件描述符
 	close(fd_fb);
 	
 	return 0;	
 }
-

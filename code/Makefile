@@ -26,7 +26,7 @@ export TOPDIR
 
 TARGET := test
 
-
+obj-y +=app/
 obj-y +=display/
 
 all : start_recursive_build $(TARGET)
