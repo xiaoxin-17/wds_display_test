@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <framebuffer.h>
+#include <disp_manager.h>
 
 static int fd_fb;
 static struct fb_var_screeninfo var;	/* Current var */
@@ -25,14 +26,14 @@ static unsigned int pixel_width;
  * 修改日期        版本号     修改人	      修改内容
  * -----------------------------------------------
  * 2020/05/12	     V1.0	  zh(angenao)	      创建
- ***********************************************************************/ 
+ ***********************************************************************/
 void lcd_put_pixel(int x, int y, unsigned int color)
 {
 	unsigned char *pen_8 = fb_base+y*line_width+x*pixel_width;
-	unsigned short *pen_16;	
-	unsigned int *pen_32;	
+	unsigned short *pen_16;
+	unsigned int *pen_32;
 
-	unsigned int red, green, blue;	
+	unsigned int red, green, blue;
 
 	pen_16 = (unsigned short *)pen_8;
 	pen_32 = (unsigned int *)pen_8;
@@ -103,7 +104,7 @@ char fb_init(void)
 	/* 清屏: 全部设为白色，0xff全字节置1 */
 	memset(fb_base, 0xff, screen_size);
 
-	return -1;
+	return 0;
 }
 
 char fb_display(void)
@@ -115,8 +116,8 @@ char fb_display(void)
 	/* 在屏幕中间画一条横线，100个红色像素点 */
 	for (i = 0; i < 100; i++)
 		lcd_put_pixel(var.xres/2+i, var.yres/2, 0xFF0000);
-	
-	return -1;
+
+	return 0;
 
 }
 char fb_deinit(void)
@@ -125,6 +126,19 @@ char fb_deinit(void)
 	munmap(fb_base , screen_size);
 	// 关闭fb设备文件描述符
 	close(fd_fb);
-	
-	return 0;	
+
+	return 0;
+}
+
+static DispOpr fb_PDispOpr = {
+    .name        = "fb",
+    .dis_init    = fb_init,
+    .dis_deinit  = fb_deinit,
+    .dis_display = fb_display,
+    .next        = NULL,
+};
+
+void fb_zc(void)
+{
+    dis_zc(&fb_PDispOpr);
 }
