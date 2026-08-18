@@ -4758,15 +4758,21 @@ void lcd_put_ascii(int x, int y, unsigned char c)
 
 char fb_display(void)
 {
-	int i;
 	/* 清屏: 全部设为白色，0xff全字节置1 */
 	memset(fb_base, 0xff, screen_size);
-
-	lcd_put_ascii(var.xres/2, var.yres/2, 'A'); /*在屏幕中间显示8*16的字母A*/
-
 	return 0;
 
 }
+
+char fb_get_buf(ptDIS_DATE int_ptDIS_DATE)
+{
+	int_ptDIS_DATE->iXres = var.xres;
+	int_ptDIS_DATE->iYres = var.yres;
+	int_ptDIS_DATE->iBpp = var.bits_per_pixel;
+	int_ptDIS_DATE->Buf = fb_base;
+	return 0;
+}
+
 char fb_deinit(void)
 {
 	// 解除内存映射
@@ -4777,11 +4783,18 @@ char fb_deinit(void)
 	return 0;
 }
 
+char dis_FlushRegion(Pregion int_Pregion, ptDIS_DATE int_ptDIS_DATE)
+{
+	return 0;
+}
+
 static DispOpr fb_PDispOpr = {
     .name        = "fb",
     .dis_init    = fb_init,
     .dis_deinit  = fb_deinit,
-    .dis_display = fb_display,
+    .dis_get_buf = fb_get_buf,
+	.dis_display = fb_display,
+	.dis_FlushRegion = dis_FlushRegion,
     .next        = NULL,
 };
 

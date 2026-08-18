@@ -6,7 +6,7 @@
 static PDispOpr g_DisDrv = NULL;
 /* 当前选中的显示驱动 */
 static PDispOpr g_Dis = NULL;
-
+pDIS_DATE gDIS_BUF;
 /* 头插法：把 int_g_DisDrv 注册为新的链表头 */
 char dis_zc(PDispOpr int_g_DisDrv)
 {
@@ -35,13 +35,28 @@ char dis_init(void)
 {
 	if (g_Dis)
 		g_Dis->dis_init();
+	if (g_Dis)
+		g_Dis->dis_get_buf(&gDIS_BUF);
+
 	return 0;
+}
+
+ptDIS_DATE GetDisplayBuffer(void)
+{
+	return &gDIS_BUF;
 }
 
 char dis_display(void)
 {
 	if (g_Dis)
 		g_Dis->dis_display();
+	return 0;
+}
+
+char FlushRegion(Pregion int_Pregion, ptDIS_DATE int_ptDIS_DATE)
+{
+	if (g_Dis)
+		g_Dis->dis_FlushRegion( int_Pregion, int_ptDIS_DATE);
 	return 0;
 }
 
